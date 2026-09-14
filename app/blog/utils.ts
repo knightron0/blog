@@ -8,6 +8,8 @@ type Metadata = {
   image?: string
   // Optional comma-separated markdown links for authors, e.g. [Name](link), [Name](link)
   authors?: string
+  // Optional comma-separated tags for the posts list.
+  tags?: string
 }
 
 function parseFrontmatter(fileContent: string) {

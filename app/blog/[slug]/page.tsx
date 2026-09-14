@@ -1,5 +1,6 @@
 import { notFound } from 'next/navigation'
 import { CustomMDX } from 'app/components/mdx'
+import { PostTags } from 'app/components/posts'
 import { formatDate, getBlogPosts } from 'app/blog/utils'
 import { baseUrl } from 'app/sitemap'
 import Footer from 'app/components/footer'
@@ -163,9 +164,12 @@ export default function Blog({ params }) {
           {post.metadata.authors && (
             <span className="hidden md:inline mx-2 text-neutral-400">·</span>
           )}
-          <p className="text-md text-neutral-600">
-            {formatDate(post.metadata.publishedAt, false, false)}
-          </p>
+          <div className="flex items-center gap-3">
+            <p className="text-md text-neutral-600">
+              {formatDate(post.metadata.publishedAt, false, false)}
+            </p>
+            <PostTags tags={post.metadata.tags} size="default" />
+          </div>
         </div>
         {post.slug === 'bam' && (
           <p className="text-sm text-neutral-500">
