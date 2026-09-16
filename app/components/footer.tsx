@@ -21,7 +21,7 @@ export default function Footer() {
   return (
     <footer className="mb-16">
       <p className="text-gray-500">
-        <Link href="https://github.com/knightron0">GitHub</Link>, <Link href="https://twitter.com/msarthak29">Twitter</Link>, <Link href="mailto:mangla@purdue.edu">Email</Link>
+        <Link href="https://github.com/knightron0">GitHub</Link>, <Link href="https://twitter.com/msarthak29">Twitter</Link>, <Link href="mailto:sarthakm@stanford.edu">Email</Link>
       </p>
     </footer>
   )
