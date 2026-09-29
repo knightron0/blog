@@ -1,0 +1,17 @@
+---
+title: 'Sparse Attention and MoBA'
+publishedAt: '2026-09-25'
+summary: ''
+authors: '[Sarthak Mangla](https://sarthakmangla.com/)'
+tags: 'Papers'
+---
+
+I recently read the [DeepSeek Sparse Attention (DSA)](https://arxiv.org/pdf/2512.02556) and [Mixture of Block Attention (MoBA)](https://arxiv.org/pdf/2502.13189) papers and wanted to challenge myself by reimplementing their core ideas (with no AI). This post follows a similar format to my [AWQ post](https://www.sarthakmangla.com/blog/awq).
+
+The name of the game in sparse attention is finding a _cheap_ heuristic that selects which tokens to attend to. Standard causal attention has each query look at *all* previous tokens, which means materializing an $L \times L$ score matrix for a sequence of length $L$ (quadratic in sequence length). We want to reduce the number of tokens each query looks at while giving up as little representational quality and performance as possible.
+
+The oracle here is full attention itself: it tells us exactly which tokens actually matter for the current query. But computing it defeats the purpose. The goal is to cheaply *guess* which tokens are important beforehand, so we only bother computing attention over those.
+
+---
+
+DeepSeek Sparse Attention (DSA) introduces a **lightning indexer** that runs before the attention layer. This means
