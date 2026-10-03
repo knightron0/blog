@@ -1,0 +1,131 @@
+---
+title: 'Sparse Attention Landscape'
+publishedAt: '2026-10-01'
+summary: ''
+tags: 'Research'
+---
+
+Long context is a problem that's on a lot of minds right now. Progress can be made along two axes: capability (improving reasoning) and efficiency (lowering the cost to run really long prompts). Sparse attention falls in the latter bucket, i.e. we want to make a base model more efficient without hurting performance.
+
+Essentially, we want to take advantage of the fact that not every previous token is relevant for every query. Thus, the name of the game is to find a cheap way to select $k$ tokens from the previous $L$ tokens in the sequence, where $k \ll L$. and perform the attention computation over that smaller set. Over the past few weeks, I’ve been reading through the different ways people have tried to solve this problem. This post is my attempt to build a bird’s-eye view of that design space.
+
+
+### Fixed Sparse Attention
+
+A very simple naive method that we can start with is to pre-define a fixed mask that each query uses. A really popular variant of this is [sliding window attention (SWA)](https://sebastianraschka.com/llm-architecture-gallery/swa/). As you can guess from the name, the query tokens attend to a fixed size $k$ neighbourhood.
+
+<center>
+    <img src="/sparse-attn/01_sliding_window.gif" alt="SWA" width="60%" />
+</center>
+
+Since this can only handle very immediate local context, long-context information needs to go through multiple layers to propogate. Thus, adoption in real models like [Gemma](https://huggingface.co/docs/transformers/v4.48.2/en/model_doc/gemma2), [Mistral](https://huggingface.co/docs/transformers/v4.38.0/en/model_doc/mistral), and [Qwen](https://huggingface.co/docs/transformers/main/en/model_doc/qwen2) happens via mixing in SWA layers with global attention. 
+
+### Block Sparse Attention
+
+We can definitely do better than a fixed pattern, since different queries might need to look at completely different parts of the context. One natural way to make the sparsity pattern content-dependent is to operate at the level of blocks. Let's partition the previous $L$ tokens into fixed-size blocks of $b$ tokens:
+
+$$
+B_1, B_2, \ldots, B_m
+$$
+
+where $m = \frac{L}{b}$. Now, for each query $q_t$, instead of deciding whether to attend to every individual token, we first assign a relevance score to each block:
+
+$$
+s_j = f(q_t, B_j)
+$$
+
+and select the top-$k$ blocks:
+
+$$
+\mathcal{B}(q_t) = \operatorname{TopK}_j \; s_j.
+$$
+
+We then run the actual attention computation only over the tokens inside those selected blocks. The main advantage here is that the selection problem becomes much cheaper (score $L/b$ things instead of $L$). Blocks are also much nicer from a systems perspective, since the selected KV entries are contiguous in memory and easier to process efficiently on GPUs.
+
+<center>
+    <img src="/sparse-attn/02_block_sparse_moba.gif" alt="MoBA" width="75%" />
+</center>
+
+[Mixture of Block Attention (MoBA)](https://arxiv.org/pdf/2502.13189) is a clean example of this approach. It mean-pools the keys within a given block $B_j$, and $s_j$ is defined as just the dot product between $q_t$ and the mean-pooled $B_j$. That gives us a cheap proxy to approximate how relevant the block $B_j$ is to $q_t$, and we can pull the top-$k$ blocks from these scores. MoBA is used in [Kimi K3](https://arxiv.org/pdf/2607.24653) to handle long context requests.
+
+<center>
+    <img src="/sparse-attn/03_xattention.gif" alt="XAttention" width="75%" />
+</center>
+
+[XAttention](https://arxiv.org/pdf/2503.16428) is another variant which conforms to this abstraction -- but the cheap proxy $f$ is more nuanced. It samples strided **antidiagonals** from the underlying attention block to estimate how much attention mass that block would receive. This gives a more direct approximation of the dense attention pattern, while still avoiding the cost of computing the full block.
+
+The obvious tradeoff here is granularity. A block might contain only one or two useful tokens, but once the block is selected we still pay the cost of attending to everything inside it. So block sparse attention is essentially trading some precision in retrieval for cheaper selection and better hardware efficiency.
+
+### Token Sparse Attention
+
+Okay so, what if we bypass the block abstraction entirely and compare the query directly against individual tokens? Instead of scoring blocks $B_j$, we assign a relevance score to each previous token:
+
+$$
+s_i = f(q_t, k_i)
+$$
+
+and select the top-$k$ tokens. Just like in block-sparse attention, we then run the full attention computation only over this selected set. This gives us much finer-grained sparsity, but it also pushes more work into the retrieval step (we still have to score all $L$ previous tokens).
+
+<center>
+    <img src="/sparse-attn/04_token_sparse_dsa.gif" alt="DSA" width="75%" />
+</center>
+
+[DeepSeek Sparse Attention (DSA)](https://arxiv.org/pdf/2512.02556) is a clean example of this idea. It introduces a cheaper learned scoring function called the **Lightning Indexer**. The query and keys are first projected into a lower-dimensional indexing space:
+
+$$
+\tilde{q}_t = W_Q^{I} q_t, \qquad \tilde{k}_i = W_K^{I} k_i
+$$
+
+and the relevance score is then computed with a much cheaper dot product:
+
+$$
+s_i = \tilde{q}_t^\top \tilde{k}_i.
+$$
+
+The indexer computes these scores against every previous token, keeps the top-$k$, and runs the full attention computation only over that subset. This mechanism does require additional parameters and specialized training, but it seems to work pretty well!
+
+### Hierarchical Sparse Attention
+
+<center>
+    <img src="/sparse-attn/05_hierarchical_hisa.gif" alt="HISA" width="75%" />
+</center>
+
+DSA gives us fine-grained token retrieval, but the indexer still has to score every previous token. [Hierarchical Indexed Sparse Attention (HISA)](https://arxiv.org/pdf/2603.28458v1) makes the retrieval process itself sparse (somewhat like MoBA combined with DSA). It first assigns a coarse score to each block:
+
+$$
+r_j = f_{\text{block}}(q_t, B_j)
+$$
+
+and keeps only the top-$K_B$ blocks in $\mathcal{B}_t$. Then, it computes token-level scores only inside those selected blocks:
+
+$$
+s_i = f_{\text{token}}(q_t, k_i),
+\qquad
+i \in \bigcup_{B_j \in \mathcal{B}_t} B_j
+$$
+
+before selecting the final top-$k$ tokens. So instead of running the fine-grained indexer over all $L$ tokens, it only runs over roughly $K_B b$ candidates.
+
+### Hybrid Sparse Attention
+
+So far, each method has mostly committed to _one_ kind of sparsity. [Native Sparse Attention](https://arxiv.org/pdf/2502.11089) instead combines three different attention paths: local, compressed, and selective. 
+
+<center>
+    <img src="/sparse-attn/06_hybrid_nsa.gif" alt="NSA" width="90%" />
+</center>
+
+The local branch handles nearby tokens with a sliding window, the compressed branch provides a coarse summary of the full context, and the selective branch retrieves a small set of important distant tokens. Each branch has its own attention softmax, while the learned gates control how strongly each branch contributes to the final output:
+
+$$
+o_t
+=
+g_{\text{local}} o_t^{\text{local}}
++
+g_{\text{compressed}} o_t^{\text{compressed}}
++
+g_{\text{selected}} o_t^{\text{selected}}
+$$
+
+--- 
+
+There are obviously more and more variants coming up, but I think this is a fun lever to optimize as we push toward more efficient sequence modeling. I’m excited to see whether deeper analysis of these methods can both inspire more nuanced attention (or maybe not?) mechanisms and give us a better understanding of how models actually use context :)
