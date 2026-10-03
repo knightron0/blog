@@ -12,13 +12,13 @@ Essentially, we want to take advantage of the fact that not every previous token
 
 ### Fixed Sparse Attention
 
-A very simple naive method that we can start with is to pre-define a fixed mask that each query uses. A really popular variant of this is [sliding window attention (SWA)](https://sebastianraschka.com/llm-architecture-gallery/swa/). As you can guess from the name, the query tokens attend to a fixed size $k$ neighbourhood.
+A very simple method that we can start with is to pre-define a fixed mask that each query uses. A really popular variant of this is [sliding window attention (SWA)](https://sebastianraschka.com/llm-architecture-gallery/swa/). As you can guess from the name, the query tokens attend to a fixed size $k$ neighbourhood.
 
 <center>
     <img src="/sparse-attn/01_sliding_window.gif" alt="SWA" width="60%" />
 </center>
 
-Since this can only handle very immediate local context, long-context information needs to go through multiple layers to propogate. Thus, adoption in real models like [Gemma](https://huggingface.co/docs/transformers/v4.48.2/en/model_doc/gemma2), [Mistral](https://huggingface.co/docs/transformers/v4.38.0/en/model_doc/mistral), and [Qwen](https://huggingface.co/docs/transformers/main/en/model_doc/qwen2) happens via mixing in SWA layers with global attention. 
+Since this can only handle very immediate local context, long-context information needs to go through multiple layers to propagate. Thus, adoption in real models like [Gemma](https://huggingface.co/docs/transformers/v4.48.2/en/model_doc/gemma2) and [Qwen](https://huggingface.co/docs/transformers/main/en/model_doc/qwen2) happens via mixing in SWA layers with global attention. 
 
 ### Block Sparse Attention
 
@@ -70,19 +70,26 @@ and select the top-$k$ tokens. Just like in block-sparse attention, we then run 
     <img src="/sparse-attn/04_token_sparse_dsa.gif" alt="DSA" width="75%" />
 </center>
 
-[DeepSeek Sparse Attention (DSA)](https://arxiv.org/pdf/2512.02556) is a clean example of this idea. It introduces a cheaper learned scoring function called the **Lightning Indexer**. The query and keys are first projected into a lower-dimensional indexing space:
+[DeepSeek Sparse Attention (DSA)](https://arxiv.org/pdf/2512.02556) is a clean example of this idea. It introduces a cheaper learned scoring function called the **Lightning Indexer**. Instead of using the full attention heads, the indexer projects the query and keys into a much smaller indexing space:
 
 $$
-\tilde{q}_t = W_Q^{I} q_t, \qquad \tilde{k}_i = W_K^{I} k_i
+q^I_{t,j} = W^I_{Q,j} q_t,
+\qquad
+k^I_i = W^I_K k_i
 $$
 
-and the relevance score is then computed with a much cheaper dot product:
+where $j$ indexes a small number of indexer heads. Each head computes a cheap similarity score, and the scores are combined using query-dependent weights:
 
 $$
-s_i = \tilde{q}_t^\top \tilde{k}_i.
+\sum_j
+w^I_{t,j}
+\operatorname{ReLU}
+\left(
+{q^I_{t,j}}^\top k^I_i
+\right).
 $$
 
-The indexer computes these scores against every previous token, keeps the top-$k$, and runs the full attention computation only over that subset. This mechanism does require additional parameters and specialized training, but it seems to work pretty well!
+The indexer computes these cheap scores against every previous token, keeps the top-$k$, and runs the full attention computation only over that subset. This mechanism does require additional parameters and specialized training, but it seems to work pretty well!
 
 ### Hierarchical Sparse Attention
 
