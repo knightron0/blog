@@ -17,7 +17,7 @@ export default function Page() {
     <>
       <section className='mb-10'>
         <div className="text-2xl md:text-3xl font-semibold pb-5" style={{ fontFamily: cormorantGaramond.style.fontFamily }}>Sarthak Mangla</div>
-        <p>I currently am <Link href="/blog/questions-im-thinking-about">exploring</Link> at Stanford. I spent the past two summers building performant large-scale systems at <Link href="https://www.cartesia.ai/">Cartesia</Link>. I recently wrapped up <Link href="/blog/west-lafayette">four awesome years</Link> at Purdue.</p>
+        <p>I'm currently <Link href="/blog/problems-im-thinking-about">exploring</Link> at Stanford. I spent the past two summers building performant large-scale systems at <Link href="https://www.cartesia.ai/">Cartesia</Link>. I recently wrapped up <Link href="/blog/west-lafayette">four awesome years</Link> at Purdue.</p>
         <br />
         <p>My past work includes GPU benchmarking systems at <Link href="https://tensara.org">Tensara</Link>, research on <Link href="https://sarthakmangla.com/blog/bam/">optimizer dynamics</Link>, self-supervised representation learning at the <Link href="https://engineering.purdue.edu/cvirl">CVIRL</Link> and <Link href="https://engineering.purdue.edu/HeinzLab/people">Heinz</Link> labs, and <Link href="https://boilerclasses.com/">BoilerClasses</Link>. </p>
         <br />
