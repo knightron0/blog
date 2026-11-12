@@ -43,6 +43,7 @@ export function brushMask(w: number, h: number, band: [number, number], stroke: 
       ctx.stroke()
     }
   }
+
   return c.toDataURL('image/png')
 }
 
