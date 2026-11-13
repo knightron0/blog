@@ -5,13 +5,24 @@ import { useEffect, useRef, useState } from 'react'
 import { paintImpression } from './paint'
 import { brushMask, maskStyle } from './brush-mask'
 
-// Homepage banner: paints public/banner.jpeg as an impressionist sketch (see ./paint.ts)
-// with a brushy edge (./brush-mask.ts). Replace that file to change the banner.
-const SRC = '/banner.jpeg'
-const ASPECT = 3.5 // width / height of the strip; the photo is center-cropped to fit
-const FOCUS_Y = 0.5 // which band of the photo to keep (0 = top, 1 = bottom)
+// Defaults preserve the homepage banner; posts can supply their own image and framing.
+type ImpressionProps = {
+  src?: string
+  aspect?: number
+  focusY?: number
+  href?: string | null
+  alt?: string
+  interactive?: boolean
+}
 
-export default function Impression() {
+export default function Impression({
+  src = '/banner.jpeg',
+  aspect = 3.5,
+  focusY = 0.5,
+  href = '/photos',
+  alt = 'Photos',
+  interactive = true,
+}: ImpressionProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const [mask, setMask] = useState<string | null>(null)
 
@@ -85,18 +96,20 @@ export default function Impression() {
       if (!frame) frame = requestAnimationFrame(render)
     }
     const onLeave = () => { previous = null }
-    canvas.addEventListener('pointermove', onMove)
-    canvas.addEventListener('pointerleave', onLeave)
+    if (interactive) {
+      canvas.addEventListener('pointermove', onMove)
+      canvas.addEventListener('pointerleave', onLeave)
+    }
 
     const img = new Image()
     img.onload = () => {
       if (cancelled) return
       // Fill the content column; CSS keeps it at 100% width if the window resizes later.
       const w = Math.max(200, canvas.parentElement?.clientWidth ?? 0)
-      const h = Math.round(w / ASPECT)
-      const cw = Math.min(img.naturalWidth, img.naturalHeight * ASPECT)
-      const ch = cw / ASPECT
-      const crop = { x: (img.naturalWidth - cw) / 2, y: (img.naturalHeight - ch) * FOCUS_Y, w: cw, h: ch }
+      const h = Math.round(w / aspect)
+      const cw = Math.min(img.naturalWidth, img.naturalHeight * aspect)
+      const ch = cw / aspect
+      const crop = { x: (img.naturalWidth - cw) / 2, y: (img.naturalHeight - ch) * focusY, w: cw, h: ch }
       setMask(brushMask(w, h, [11, 16], [3, 9]))
       cancel = paintImpression(source, img, w, h, {
         crop, density: 1.3, detail: 2,
@@ -107,7 +120,7 @@ export default function Impression() {
       ready = true
       if (!frame) frame = requestAnimationFrame(render)
     }
-    img.src = SRC
+    img.src = src
 
     return () => {
       cancelled = true
@@ -116,11 +129,17 @@ export default function Impression() {
       canvas.removeEventListener('pointermove', onMove)
       canvas.removeEventListener('pointerleave', onLeave)
     }
-  }, [])
+  }, [src, aspect, focusY, interactive])
 
-  return (
-    <Link href="/photos" aria-label="Photos" className="block w-full !no-underline hover:!bg-transparent">
-      <canvas ref={canvasRef} className="block w-full h-auto" style={{ aspectRatio: `${ASPECT}`, ...(mask ? maskStyle(mask) : {}) }} />
+  const canvas = (
+    <canvas ref={canvasRef} role="img" aria-label={alt} className="block w-full h-auto" style={{ aspectRatio: `${aspect}`, ...(mask ? maskStyle(mask) : {}) }} />
+  )
+
+  return href ? (
+    <Link href={href} aria-label={alt} className="block w-full !no-underline hover:!bg-transparent">
+      {canvas}
     </Link>
+  ) : (
+    <div className="my-6 w-full">{canvas}</div>
   )
 }

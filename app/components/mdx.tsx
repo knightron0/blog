@@ -3,6 +3,7 @@ import Image from 'next/image'
 import { MDXRemote } from 'next-mdx-remote/rsc'
 import { highlight } from 'sugar-high'
 import React from 'react'
+import Impression from './impression'
 import rehypeKatex from 'rehype-katex'
 import rehypePrettyCode from "rehype-pretty-code";
 import remarkMath from 'remark-math';
@@ -99,6 +100,7 @@ let components = {
   h5: createHeading(5),
   h6: createHeading(6),
   Image: RoundedImage,
+  Impression,
   a: CustomLink,
   Table,
 }

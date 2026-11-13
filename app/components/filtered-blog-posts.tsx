@@ -16,7 +16,6 @@ const tagStyles: Record<string, string> = {
   Research: 'text-[#5f7d8d] before:bg-[#83a7bd]',
   Experiments: 'text-[#9a6255] before:bg-[#d4a096]',
   Life: 'text-[#5e7c63] before:bg-[#7fa985]',
-  Notes: 'text-[#7a6a8a] before:bg-[#a897ba]',
 }
 const defaultTagStyle = 'text-[#6f675f] before:bg-[#a79d92]'
 
