@@ -14,7 +14,11 @@ export const metadata: Metadata = {
     template: '%s | Sarthak Mangla',
   },
   icons: {
-    icon: 'icon.png',
+    icon: [
+      { url: '/favicon-tahoe-painted.png', type: 'image/png', sizes: '512x512' },
+      { url: '/favicon-tahoe-painted-16.png', type: 'image/png', sizes: '16x16' },
+      { url: '/favicon-tahoe-painted-32.png', type: 'image/png', sizes: '32x32' },
+    ],
   },
   description: "",
   openGraph: {
