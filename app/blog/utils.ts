@@ -10,6 +10,8 @@ type Metadata = {
   authors?: string
   // Optional comma-separated tags for the posts list.
   tags?: string
+  // Set `draft: true` to hide the post in production (still visible in `next dev`).
+  draft?: string
 }
 
 function parseFrontmatter(fileContent: string) {
@@ -53,8 +55,16 @@ function getMDXData(dir) {
   })
 }
 
+export function isDraft(post: { metadata: Metadata }) {
+  return post.metadata.draft === 'true'
+}
+
 export function getBlogPosts() {
-  return getMDXData(path.join(process.cwd(), 'app', 'blog', 'posts'))
+  let posts = getMDXData(path.join(process.cwd(), 'app', 'blog', 'posts'))
+  if (process.env.NODE_ENV === 'production') {
+    posts = posts.filter((post) => !isDraft(post))
+  }
+  return posts
 }
 
 export function formatDate(

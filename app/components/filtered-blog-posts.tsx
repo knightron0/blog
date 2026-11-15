@@ -8,7 +8,7 @@ type Post = {
   slug: string
   year: string
   date: string
-  metadata: { title: string; tags?: string }
+  metadata: { title: string; tags?: string; draft?: string }
 }
 
 // Order here is the order filters appear in.
@@ -79,7 +79,12 @@ export function FilteredBlogPosts({ posts }: { posts: Post[] }) {
               <div className="flex w-full flex-col md:flex-row md:gap-2">
                 <p className="w-16 shrink-0 tabular-nums text-neutral-500">{post.date}</p>
                 <div className="flex min-w-0 flex-1 flex-col gap-1 md:flex-row md:items-baseline md:justify-between md:gap-4">
-                  <p className="min-w-0 tracking-tight text-neutral-900">{post.metadata.title}</p>
+                  <p className="min-w-0 tracking-tight text-neutral-900">
+                    {post.metadata.title}
+                    {post.metadata.draft === 'true' && (
+                      <span className="ml-2 text-xs uppercase tracking-wide text-amber-600">draft</span>
+                    )}
+                  </p>
                   {post.metadata.tags && <PostTags tags={post.metadata.tags} />}
                 </div>
               </div>
