@@ -4,7 +4,7 @@ import Image from 'next/image'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { paintImpression } from 'app/components/paint'
 
-export type Photo = { src: string; width: number; height: number; blurDataURL: string }
+export type Photo = { src: string; width: number; height: number; blurDataURL: string; location?: string }
 
 // Paints the photo in brush strokes when it scrolls into view (same brushwork as the
 // homepage sketch), then fades the real photo in over the painting.
@@ -123,11 +123,16 @@ export default function Gallery({ rows }: { rows: Photo[][] }) {
                 <button
                   key={p.src}
                   onClick={() => setOpen(i)}
-                  aria-label="Open photo"
+                  aria-label={p.location ? `Open photo from ${p.location}` : 'Open photo'}
                   style={{ flex: `${ar} 1 0%`, aspectRatio: `${ar}` }}
                   className="group relative min-w-0 overflow-hidden cursor-zoom-in"
                 >
                   <PaintedPhoto photo={p} delay={(i % 3) * 180} />
+                  {p.location && (
+                    <span className="pointer-events-none absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/70 to-transparent px-3 pb-3 pt-8 text-left text-xs sm:text-sm text-white opacity-0 transition-opacity duration-200 group-hover:opacity-100 group-focus-visible:opacity-100 motion-reduce:transition-none">
+                      {p.location}
+                    </span>
+                  )}
                 </button>
               )
             })}
@@ -155,7 +160,7 @@ export default function Gallery({ rows }: { rows: Photo[][] }) {
             <Image
               key={current.src}
               src={current.src}
-              alt=""
+              alt={current.location ? `Photo from ${current.location}` : ''}
               fill
               sizes="100vw"
               quality={90}
@@ -165,6 +170,9 @@ export default function Gallery({ rows }: { rows: Photo[][] }) {
               priority
             />
           </div>
+          {current.location && (
+            <p className="mt-4 text-center text-sm text-white">{current.location}</p>
+          )}
           <div className="mt-4 flex items-center gap-6 text-sm text-neutral-400 select-none">
             <button
               onClick={(e) => { e.stopPropagation(); step(-1) }}

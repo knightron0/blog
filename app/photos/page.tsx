@@ -32,12 +32,31 @@ const LAYOUT = [
   ['sf2', 'chi1', 'sf5'],
 ]
 
+// Location labels are kept separate from the generated photo manifest.
+const LOCATIONS: Record<string, string> = {
+  chi: 'Chicago',
+  costarica: 'Costa Rica',
+  costarica1: 'La Fortuna',
+  costarica2: 'La Fortuna',
+  costarica3: 'Monteverde',
+  costarica4: 'Río Fortuna',
+  costarica5: 'Monteverde',
+  indy: 'Indianapolis',
+  monterey: 'Pacific Grove',
+  pofa: 'Palace of Fine Arts',
+  purdue: 'Purdue University',
+  sf: 'San Francisco',
+  tahoe: 'Lake Tahoe',
+  yosemite: 'Yosemite',
+}
+
 function getRows(): Photo[][] {
   const byName = new Map<string, Photo>(
-    manifest.map(({ src, width, height, blurDataURL }) => [
-      src.replace(/^\/photos\//, '').replace(/\.jpg$/, ''),
-      { src, width, height, blurDataURL },
-    ])
+    manifest.map(({ src, width, height, blurDataURL }) => {
+      const name = src.replace(/^\/photos\//, '').replace(/\.jpg$/, '')
+      const location = LOCATIONS[name] ?? LOCATIONS[name.replace(/\d+$/, '')]
+      return [name, { src, width, height, blurDataURL, location }]
+    })
   )
   const rows = LAYOUT.map((row) => row.flatMap((n) => byName.get(n) ?? [])).filter((r) => r.length)
   const placed = new Set(LAYOUT.flat())
