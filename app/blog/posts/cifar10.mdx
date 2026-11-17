@@ -87,7 +87,7 @@ Sol’s 10% reasoned run split those steps across the phase boundary. In phase o
 
 #### Constructing a Classifier by Hand
 
-Opus treated the two phases as a pipeline: code turns the unlabeled images into readable units, then it learns the label mapping by hand. In phase 1 it built a classic training-free front end: ZCA-whitened 3×3 patches, clustered with spherical k-means into 63 conv1 filters, with the rest of the network wired so images fall into 120 clusters, each read out as its own channel. After end_tools(), with no code available, it fetched labels for all 4,500 images, tallied each cluster's class counts in its own reasoning, and wrote those counts directly into fc.weight, so each cluster votes for classes in proportion to what it contained. A one-off predict() on 30 images served as a sanity check, and it submitted without ever calling evaluate(). It scored 39.6% on validation and 40.5% on test, against about 10% for the random start.
+Opus treated the two phases as a pipeline: code turns the unlabeled images into readable units, then it learns the label mapping by hand. In phase 1 it built a classic training-free front end: ZCA-whitened $3 \times 3$ patches, clustered with spherical k-means into 63 `conv1` filters, with the rest of the network wired so images fall into 120 clusters, each read out as its own channel. After `end_tools()`, with no code available, it fetched labels for all 4,500 images, tallied each cluster's class counts in its own reasoning, and wrote those counts directly into `fc.weight`, so each cluster votes for classes in proportion to what it contained. A one-off `predict()` on 30 images served as a sanity check, and it submitted without ever calling `evaluate()`. It scored 39.6% on validation and 40.5% on test, against about 10% for the random start.
 
 <center>
     <img src="/cifar/opus-conv1-kernels.png" width="40%"></img>
@@ -95,7 +95,13 @@ Opus treated the two phases as a pipeline: code turns the unlabeled images into 
 </center>
 
 
-In a trained ResNet, the final linear layer turns the 512 pooled features into ten class scores, and its weights are learned by gradient descent. Opus wrote it from a tally instead. Earlier in the network it had arranged for 120 of those 512 feature channels to act as template detectors: each fires when an image looks like one of 120 groups of training images it had found without labels. Once it was allowed to see labels, it read the class of every image in each group and counted them. Those counts became the weights: the weight from detector k to class c is simply the number of class-c images in group k. A new image's score for "cat" is therefore a vote: each detector that fires adds its cat count, and the class with the most votes wins.
+In a trained ResNet, the final linear layer turns the 512 pooled features into ten class scores, and its weights are learned by gradient descent. Opus wrote it from a tally instead. Earlier in the network it had arranged for 120 of those 512 feature channels to act as template detectors: each fires when an image looks like one of 120 groups of training images it had found without labels. Once it was allowed to see labels, it read the class of every image in each group and counted them. Those counts became the weights: the weight from detector $k$ to class $c$ is simply $n_{k,c}$, the number of class-$c$ images in group $k$. A new image $x$'s score for a class is therefore a vote:
+
+$$
+s_c(x) = \sum_{k=1}^{120} n_{k,c} \, a_k(x)
+$$
+
+where $a_k(x)$ is how strongly detector $k$ fires. For example, an image's score for "cat" sums the cat counts of every detector it activates, and the class with the most votes wins.
 
 <center>
     <img src="/cifar/opus-fc-votes.png" width="80%"></img>
