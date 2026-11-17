@@ -117,6 +117,17 @@ html {
   width: 40%;
 }
 
+.prose .side-by-side {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 1rem;
+}
+
+.prose .side-by-side img {
+  height: auto;
+}
+
 .prose .media-caption {
   font-style: italic;
   color: #6f675f;
@@ -131,6 +142,10 @@ html {
 
 .prose p {
   @apply my-4 text-neutral-800;
+}
+
+.prose center p {
+  margin-top: 0.5rem;
 }
 
 .prose li {
@@ -215,11 +230,33 @@ input[type='email'] {
   appearance: none;
 }
 
-table {
-  display: block;
-  max-width: fit-content;
+.prose .table-scroll {
+  margin: 1.5rem 0;
+  max-width: 100%;
   overflow-x: auto;
-  white-space: nowrap;
+}
+
+.prose table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.95rem;
+}
+
+.prose th,
+.prose td {
+  border: 1px solid #DED5CA;
+  padding: 0.625rem 0.875rem;
+  vertical-align: top;
+}
+
+.prose th {
+  background-color: #f5f2ed;
+  font-weight: 600;
+}
+
+.prose th:not([align]),
+.prose td:not([align]) {
+  text-align: left;
 }
 
 .title {

@@ -7,8 +7,17 @@ import Impression from './impression'
 import rehypeKatex from 'rehype-katex'
 import rehypePrettyCode from "rehype-pretty-code";
 import remarkMath from 'remark-math';
+import remarkGfm from 'remark-gfm';
 
 import "katex/dist/katex.min.css";
+
+function ScrollableTable(props: React.ComponentProps<'table'>) {
+  return (
+    <div className="table-scroll">
+      <table {...props} />
+    </div>
+  )
+}
 
 function Table({ data }) {
   let headers = data.headers.map((header, index) => (
@@ -23,12 +32,12 @@ function Table({ data }) {
   ))
 
   return (
-    <table>
+    <ScrollableTable>
       <thead>
         <tr>{headers}</tr>
       </thead>
       <tbody>{rows}</tbody>
-    </table>
+    </ScrollableTable>
   )
 }
 
@@ -102,6 +111,7 @@ let components = {
   Image: RoundedImage,
   Impression,
   a: CustomLink,
+  table: ScrollableTable,
   Table,
 }
 
@@ -225,7 +235,7 @@ export function CustomMDX(props) {
       components={{ ...components, ...(props.components || {}) }}
       options={{
         mdxOptions: {
-          remarkPlugins: [remarkMath],
+          remarkPlugins: [remarkMath, remarkGfm],
           rehypePlugins: [
             rehypeKatex,
             [rehypePrettyCode, { theme: "one-dark-pro" }]
