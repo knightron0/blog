@@ -5,7 +5,8 @@ tags: 'Experiments'
 authors: '[Vedang Asgaonkar](https://vedangasgaonkar.github.io), [Sarthak Mangla](https://sarthakmangla.com/), [Mridul Agarwal](https://mridulagarwal.com)'
 ---
 
-**TL;DR:** We asked language models to write the weights of a CIFAR-10 ResNet-18 _without_ backpropagation. With access to just 10% of the training data, Claude Opus 5.5 reached **40.5%** test accuracy by constructing visual features using code, then reasoning about how to map those features to labels purely in its context, without further code execution. When allowed to use code for non-gradient-based fitting to map features to labels, it reached **65%**. Even without seeing any CIFAR-10 images, models managed roughly **25%** accuracy by encoding visual priors or inventing their own synthetic data. This is cross-posted on [Vedang's blog](https://vedangasgaonkar.github.io/blogs/hallucinating-a-cifar-10-classifier/) as well. 
+**TL;DR:** We asked language models to write the weights of a CIFAR-10 ResNet-18 _without_ backpropagation. With access to just 10% of the training data, Claude Opus 5.5 reached **40.5%** test accuracy by constructing visual features using code, then reasoning about how to map those features to labels purely in its context, without further code execution. When allowed to use code for non-gradient-based fitting to map features to labels, it reached **65%**. Even without seeing any CIFAR-10 images, models managed roughly **25%** accuracy by encoding visual priors or inventing their own synthetic data. This post is also cross-posted on [Vedang’s](https://vedangasgaonkar.github.io/blogs/hallucinating-a-cifar-10-classifier/) and [Mridul’s](https://www.mridulagarwal.com/blogs/hallucinating-a-cifar-10-classifier/) blogs.
+
 
 <center>
     <img src="/cifar/hero.png" width="100%"></img>
