@@ -5,7 +5,7 @@ tags: 'Experiments'
 authors: '[Vedang Asgaonkar](https://vedangasgaonkar.github.io), [Sarthak Mangla](https://sarthakmangla.com/), [Mridul Agarwal](https://mridulagarwal.com)'
 ---
 
-**TL;DR:** We asked language models to write the weights of a zero-initialized CIFAR-10 ResNet-18 _without_ backpropagation. With access to just 10% of the training data, Claude Opus 5.5 reached 40.5% test accuracy by constructing visual features using code, then reasoning about how to map those features to labels purely in its context, without further code execution. When allowed to use code for non-gradient-based fitting to map features to labels, it reached 65%. Even without seeing any CIFAR-10 images, models managed roughly 25% accuracy by encoding visual priors or inventing their own synthetic data.
+**TL;DR:** We asked language models to write the weights of a zero-initialized CIFAR-10 ResNet-18 _without_ backpropagation. With access to just 10% of the training data, Claude Opus 5.5 reached **40.5%** test accuracy by constructing visual features using code, then reasoning about how to map those features to labels purely in its context, without further code execution. When allowed to use code for non-gradient-based fitting to map features to labels, it reached **65%**. Even without seeing any CIFAR-10 images, models managed roughly **25%** accuracy by encoding visual priors or inventing their own synthetic data. This is cross-posted on [Vedang's blog](https://vedangasgaonkar.github.io/blogs/hallucinating-a-cifar-10-classifier/) as well. 
 
 <center>
     <img src="/cifar/hero.png" width="100%"></img>
@@ -136,4 +136,4 @@ Our favourite part was seeing the strange ways the models approached the problem
 
 The reasoning-only setting felt the most interesting -- Opus managed to construct a useful visual representation without labels, then turn label statistics into a working classifier entirely through in-context reasoning. We're curious how far this can go with better representations (maybe post-training?), larger reasoning budgets, and architectures that are easier to program directly.
 
-If you're interested in looking at the harness, all of the code is available on GitHub!
+If you're interested in looking at the harness, all of the code is available on [GitHub](https://github.com/knightron0/ricursive-wsp)!
